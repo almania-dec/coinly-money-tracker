@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coinly – Money Tracker</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#6b7380;--bd:#e4e7ec;--ac:#0f9d73;--acx:#fff;--in:#0f9d73;--ex:#e5484d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1116;--card:#171b22;--tx:#eef0f3;--mu:#8b94a1;--bd:#262c36;--ac:#2cc795;--acx:#06251b;--in:#2cc795;--ex:#ff6b70}}
+:root[data-theme="dark"]{--bg:#0e1116;--card:#171b22;--tx:#eef0f3;--mu:#8b94a1;--bd:#262c36;--ac:#2cc795;--acx:#06251b;--in:#2cc795;--ex:#ff6b70}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#app{max-width:520px;margin:0 auto;padding:0 14px}
+.top{display:flex;align-items:center;gap:8px;padding:14px 0;justify-content:space-between}
+.top b{font-size:20px;color:var(--ac)}
+.seg{display:flex;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;color:var(--mu);padding:6px 12px;border-radius:8px;font:inherit;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--ac);color:var(--acx);font-weight:600}
+select,input{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;width:100%}
+.top select{width:auto;padding:6px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.mu{color:var(--mu);font-size:13px}.big{font-size:30px;font-weight:700;margin:2px 0}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.in{color:var(--in)}.ex{color:var(--ex)}
+h3{margin:18px 0 8px;font-size:16px}
+.tx{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.tx:last-child{border:0}.tx .m{flex:1;min-width:0}.tx .m div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.x{background:none;border:0;color:var(--mu);font-size:18px;cursor:pointer;padding:4px 8px}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ac);border-radius:6px}
+.bar i.over{background:var(--ex)}
+.btn{background:var(--ac);color:var(--acx);border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.btn.sm{padding:6px 10px;font-size:13px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav div{display:flex;width:100%;max-width:520px}
+nav button{flex:1;border:0;background:none;color:var(--mu);padding:10px 0;font:inherit;font-size:12px;cursor:pointer}
+nav button.on{color:var(--ac);font-weight:700}
+.fab{position:fixed;right:max(18px,calc(50% - 242px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:0;background:var(--ac);color:var(--acx);font-size:30px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet{background:var(--bg);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
+.sheet label{display:block;margin:10px 0 4px;font-size:13px;color:var(--mu)}
+.err{color:var(--ex);font-size:13px;margin-top:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:8px 14px;border-radius:20px;font-size:13px;z-index:9}
+.chart{overflow-x:auto}
+.empty{text-align:center;color:var(--mu);padding:22px 0}
+.chip{display:inline-flex;align-items:center;background:var(--bg);border:1px solid var(--bd);border-radius:16px;padding:3px 6px 3px 10px;margin:0 6px 6px 0;font-size:13px}
+</style></head><body>
+<div id="app"></div>
+<script>
+const CATS={personal:{expense:['Food','Groceries','Dining Out','Transport','Fuel','Rent','Bills','Utilities','Airtime & Data','Shopping','Clothing','Personal Care','Health','Insurance','Education','Entertainment','Subscriptions','Travel','Family Support','Charity & Giving','Savings','Other'],income:['Salary','Business Income','Freelance','Allowance','Gift','Rental Income','Investment','Interest','Refund','Other']},business:{expense:['Inventory','Supplies','Salaries','Rent','Utilities','Fuel & Power','Internet & Airtime','Transport & Delivery','Marketing','Equipment','Software','Repairs','Professional Fees','Insurance','Bank Charges','Loan Repayment','Tax','Travel','Other'],income:['Sales','Services','Commission','Investment','Interest','Grants','Loan Received','Refund','Other']}};
+const CODE={'₦':'NGN','$':'USD','£':'GBP','€':'EUR'};
+let S={cur:'₦',mode:'personal',tx:[],bud:{personal:{},business:{}},goals:[],rec:[],acc:{personal:['Main'],business:['Main']},cats:{personal:{expense:[],income:[]},business:{expense:[],income:[]}}};
+try{const r=localStorage.getItem('coinly');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const store=()=>{try{localStorage.setItem('coinly',JSON.stringify(S))}catch(e){}};
+S.tx.forEach(t=>{if(!t.acc)t.acc=S.acc[t.mode][0]});S.rec.forEach(r=>{if(!r.acc)r.acc=S.acc[r.mode][0]});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let tab='home',month=today().slice(0,7),q='',sh=null;
+const fmt=n=>S.cur+(+n).toLocaleString(undefined,{maximumFractionDigits:2});
+const mine=()=>S.tx.filter(t=>t.mode===S.mode).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+const sum=(a,type)=>a.filter(t=>t.type===type).reduce((s,t)=>s+t.amt,0);
+const ml=m=>{const[y,mo]=m.split('-');return new Date(+y,+mo-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})};
+const shift=(m,d)=>{const[y,mo]=m.split('-');const x=new Date(+y,+mo-1+d,1);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')};
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function rows(a,del=true){if(!a.length)return '<div class="empty">No transactions yet. Tap + to add one.</div>';
+ return a.map(t=>`<div class="tx"><div class="m"><div><b>${esc(t.cat)}</b>${t.r?' <span class="mu">↻</span>':''}</div><div class="mu">${esc(t.acc)} · ${esc(t.note||'')}${t.note?' · ':''}${t.date}</div></div><b class="${t.type==='income'?'in':t.type==='tin'||t.type==='tout'?'mu':'ex'}">${t.type==='income'||t.type==='tin'?'+':'−'}${fmt(t.amt)}</b>${del?`<button class="x" aria-label="Delete" onclick="delTx('${t.id}')">×</button>`:''}</div>`).join('')}
+function delTx(id){const x=S.tx.find(t=>t.id===id);S.tx=S.tx.filter(t=>t.id!==id&&!(x&&x.tr&&t.tr===x.tr));store();draw()}
+
+const V={
+home(){const a=mine(),m=a.filter(t=>t.date.startsWith(today().slice(0,7)));
+ return `<div class="card"><div class="mu">${cap(S.mode)} balance</div><div class="big">${fmt(sum(a,'income')-sum(a,'expense'))}</div>
+ <div class="row"><div><div class="mu">Income this month</div><b class="in">${fmt(sum(m,'income'))}</b></div><div><div class="mu">Spent this month</div><b class="ex">${fmt(sum(m,'expense'))}</b></div></div></div>
+ ${S.acc[S.mode].length>1?'<h3>Accounts</h3><div class="card">'+S.acc[S.mode].map(n=>`<div class="row" style="padding:4px 0"><span>${esc(n)}</span><b style="text-align:right">${fmt(bal(n))}</b></div>`).join('')+'</div>':''}<h3>Recent</h3><div class="card">${rows(a.slice(0,6),false)}</div>`},
+txs(){return `<h3>Transactions</h3><input placeholder="Search category, note or date" value="${esc(q)}" oninput="q=this.value;document.getElementById('list').innerHTML=rows(filt())"><div class="card" style="margin-top:10px" id="list">${rows(filt())}</div>`},
+rep(){const a=mine().filter(t=>t.date.startsWith(month)),inc=sum(a,'income'),exp=sum(a,'expense');
+ const cats={};a.filter(t=>t.type==='expense').forEach(t=>cats[t.cat]=(cats[t.cat]||0)+t.amt);
+ const cl=Object.entries(cats).sort((x,y)=>y[1]-x[1]);
+ return `<div class="row" style="align-items:center;margin-top:6px"><button class="btn alt sm" style="flex:0" onclick="month=shift(month,-1);draw()">‹</button><h3 style="text-align:center;margin:8px 0">${ml(month)}</h3><button class="btn alt sm" style="flex:0" onclick="month=shift(month,1);draw()">›</button></div>
+ <div class="card"><div class="row"><div><div class="mu">Income</div><b class="in">${fmt(inc)}</b></div><div><div class="mu">Expenses</div><b class="ex">${fmt(exp)}</b></div><div><div class="mu">Net</div><b>${fmt(inc-exp)}</b></div></div></div>
+ <h3>Last 6 months</h3><div class="card chart">${chart()}</div>
+ <h3>Spending by category</h3><div class="card">${cl.length?cl.map(([c,v])=>`<div style="margin-bottom:10px"><div class="row"><span>${esc(c)}</span><span style="text-align:right">${fmt(v)} <span class="mu">${Math.round(v/exp*100)}%</span></span></div><div class="bar"><i style="width:${v/exp*100}%"></i></div></div>`).join(''):'<div class="empty">No expenses this month.</div>'}</div>
+ <h3>Export</h3><div class="row"><button class="btn" onclick="expCsv()">Excel (CSV)</button><button class="btn alt" onclick="expPdf()">PDF report</button></div><p class="mu">CSV has all ${S.mode} transactions and opens in Excel. PDF is the report for ${ml(month)}.</p>`},
+plan(){const b=S.bud[S.mode],m=mine().filter(t=>t.date.startsWith(today().slice(0,7))&&t.type==='expense'),gl=S.goals.filter(g=>g.mode===S.mode);
+ return `<h3 style="margin-top:6px">Accounts</h3>${accList()}<div class="row" style="align-items:center"><h3>Monthly budgets</h3><button class="btn sm" style="flex:0;white-space:nowrap" onclick="addBud()">Set budget</button></div>
+ ${Object.keys(b).length?Object.entries(b).map(([c,l])=>{const s=m.filter(t=>t.cat===c).reduce((x,t)=>x+t.amt,0),p=s/l*100;return `<div class="card"><div class="row"><b>${esc(c)}</b><span style="text-align:right" class="${p>100?'ex':''}">${fmt(s)} / ${fmt(l)}</span></div><div class="bar"><i class="${p>100?'over':''}" style="width:${Math.min(p,100)}%"></i></div><div class="mu" style="margin-top:6px">${p>100?'Over by '+fmt(s-l):fmt(l-s)+' left'} <button class="x" style="float:right;font-size:14px" onclick="delBud('${esc(c)}')">remove</button></div></div>`}).join(''):'<div class="card empty">No budgets yet.</div>'}
+ <div class="row" style="align-items:center"><h3>Savings goals</h3><button class="btn sm" style="flex:0;white-space:nowrap" onclick="addGoal()">New goal</button></div>
+ ${gl.length?gl.map(g=>{const p=Math.min(g.saved/g.target*100,100);return `<div class="card"><div class="row"><b>${esc(g.name)}</b><span style="text-align:right">${fmt(g.saved)} / ${fmt(g.target)}</span></div><div class="bar"><i style="width:${p}%"></i></div><div class="row" style="margin-top:10px;align-items:center"><span class="mu">${Math.round(p)}% saved</span><span style="text-align:right"><button class="btn sm" onclick="fund('${g.id}')">Add funds</button> <button class="x" style="font-size:14px" onclick="delGoal('${g.id}')">remove</button></span></div></div>`}).join(''):'<div class="card empty">No goals yet.</div>'}<h3>Recurring</h3>${recList()}<h3>Categories</h3>${catList()}`}
+};
+function filt(){const s=q.toLowerCase();return mine().filter(t=>!s||(t.cat+' '+(t.note||'')+' '+t.date+' '+t.acc).toLowerCase().includes(s))}
+function chart(){const ms=[];for(let i=5;i>=0;i--)ms.push(shift(month,-i));const a=mine();
+ const d=ms.map(m=>{const x=a.filter(t=>t.date.startsWith(m));return[m,sum(x,'income'),sum(x,'expense')]});
+ const mx=Math.max(1,...d.flatMap(x=>[x[1],x[2]]));
+ return `<svg viewBox="0 0 320 150" width="100%" role="img" aria-label="Income vs expenses, last 6 months">${d.map((x,i)=>{const h1=x[1]/mx*100,h2=x[2]/mx*100,o=i*52+8;return `<rect x="${o}" y="${110-h1}" width="18" height="${h1}" rx="3" style="fill:var(--in)"/><rect x="${o+20}" y="${110-h2}" width="18" height="${h2}" rx="3" style="fill:var(--ex)"/><text x="${o+19}" y="130" text-anchor="middle" font-size="11" style="fill:var(--mu)">${new Date(+x[0].slice(0,4),+x[0].slice(5)-1,1).toLocaleString(undefined,{month:'short'})}</text>`}).join('')}</svg><div class="mu"><span class="in">■</span> Income &nbsp; <span class="ex">■</span> Expenses</div>`}
+
+/* Sheets */
+function openSheet(title,fields,ok,v={}){sh={title,fields,ok,v,err:''};fields.forEach(f=>{if(v[f.k]===undefined)v[f.k]=f.def!==undefined?f.def:(f.opts?f.opts(v)[0]:'')});draw()}
+function sheetHtml(){if(!sh)return '';const v=sh.v;
+ return `<div class="ov" onclick="if(event.target===this){sh=null;draw()}"><div class="sheet"><h3 style="margin-top:0">${sh.title}</h3>${sh.fields.map(f=>{
+ if(f.t==='seg')return `<div class="seg" style="margin:6px 0">${f.opts(v).map(o=>`<button class="${v[f.k]===o?'on':''}" style="flex:1" onclick="setSeg('${f.k}','${o}')">${cap(o)}</button>`).join('')}</div>`;
+ if(f.t==='select')return `<label>${f.l}</label><select onchange="sh.v['${f.k}']=this.value">${f.opts(v).map(o=>`<option ${v[f.k]===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+ return `<label>${f.l}</label><input type="${f.t}" ${f.t==='number'?'inputmode="decimal" step="any" min="0"':''} value="${esc(v[f.k])}" oninput="sh.v['${f.k}']=this.value">`}).join('')}
+ ${sh.err?`<div class="err">${sh.err}</div>`:''}<div class="row" style="margin-top:14px"><button class="btn alt" onclick="sh=null;draw()">Cancel</button><button class="btn" onclick="submitSheet()">Save</button></div></div></div>`}
+function setSeg(k,o){sh.v[k]=o;sh.fields.forEach(f=>{if(f.t==='select'&&!f.opts(sh.v).includes(sh.v[f.k]))sh.v[f.k]=f.opts(sh.v)[0]});draw()}
+function submitSheet(){const e=sh.ok(sh.v);if(e){sh.err=e;draw();return}sh=null;store();draw()}
+const pos=x=>x>0&&isFinite(x);
+function addTx(){openSheet('Add transaction',[
+ {k:'type',t:'seg',opts:()=>['expense','income'],def:'expense'},
+ {k:'amt',t:'number',l:'Amount ('+S.cur+')',def:''},
+ {k:'cat',t:'select',l:'Category',opts:v=>catsOf(S.mode,v.type||'expense')},{k:'newcat',t:'text',l:'Or add a new category (optional)',def:''},{k:'acc',t:'select',l:'Account',opts:()=>S.acc[S.mode]},
+ {k:'date',t:'date',l:'Date',def:today()},{k:'rep',t:'select',l:'Repeat',opts:()=>['Never','Daily','Weekly','Monthly','Yearly'],def:'Never'},{k:'note',t:'text',l:'Note (optional)',def:''}],
+ v=>{const a=parseFloat(v.amt);if(!pos(a))return 'Enter an amount greater than 0.';if(!v.date)return 'Pick a date.';
+  const nc=v.newcat.trim().slice(0,24);if(nc){const ex=catsOf(S.mode,v.type).find(c=>c.toLowerCase()===nc.toLowerCase());if(ex)v.cat=ex;else{v.cat=nc;S.cats[S.mode][v.type].push(nc)}}
+  S.tx.push({id:uid(),mode:S.mode,type:v.type,amt:a,cat:v.cat,acc:v.acc,date:v.date,note:v.note.trim()});
+  if(v.rep!=='Never'){const f=v.rep.toLowerCase(),d=+v.date.slice(8);S.rec.push({id:uid(),mode:S.mode,type:v.type,amt:a,cat:v.cat,acc:v.acc,note:v.note.trim(),freq:f,day:d,next:adv(v.date,f,d)});runRec()}},{type:'expense'})}
+function addBud(){openSheet('Set monthly budget',[{k:'cat',t:'select',l:'Expense category',opts:()=>catsOf(S.mode,'expense')},{k:'lim',t:'number',l:'Limit ('+S.cur+')',def:''}],
+ v=>{const a=parseFloat(v.lim);if(!pos(a))return 'Enter a limit greater than 0.';S.bud[S.mode][v.cat]=a})}
+function delBud(c){delete S.bud[S.mode][c];store();draw()}
+function addGoal(){openSheet('New savings goal',[{k:'name',t:'text',l:'Goal name',def:''},{k:'target',t:'number',l:'Target ('+S.cur+')',def:''}],
+ v=>{const a=parseFloat(v.target);if(!v.name.trim())return 'Give the goal a name.';if(!pos(a))return 'Enter a target greater than 0.';S.goals.push({id:uid(),mode:S.mode,name:v.name.trim(),target:a,saved:0})})}
+function fund(id){openSheet('Add funds',[{k:'amt',t:'number',l:'Amount ('+S.cur+')',def:''}],v=>{const a=parseFloat(v.amt);if(!pos(a))return 'Enter an amount greater than 0.';S.goals.find(g=>g.id===id).saved+=a})}
+function delGoal(id){S.goals=S.goals.filter(g=>g.id!==id);store();draw()}
+
+/* Accounts & categories */
+const catsOf=(m,t)=>CATS[m][t].filter(c=>c!=='Other').concat(S.cats[m][t],['Other']);
+const bal=n=>mine().filter(t=>t.acc===n).reduce((s,t)=>s+(t.type==='income'||t.type==='tin'?t.amt:-t.amt),0);
+function accList(){const A=S.acc[S.mode];return A.map((n,i)=>`<div class="card"><div class="row" style="align-items:center"><b>${esc(n)}</b><span style="text-align:right">${fmt(bal(n))} <button class="x" style="font-size:14px" onclick="delAcc(${i})">remove</button></span></div></div>`).join('')+`<div class="row"><button class="btn alt" onclick="addAcc()">Add account</button><button class="btn alt" onclick="transfer()">Transfer</button></div>`}
+function addAcc(){openSheet('Add account',[{k:'name',t:'text',l:'Account name (e.g. Bank, Cash, Mobile money)',def:''}],v=>{const n=v.name.trim().slice(0,24);if(!n)return 'Enter a name.';if(S.acc[S.mode].some(a=>a.toLowerCase()===n.toLowerCase()))return 'You already have an account with that name.';S.acc[S.mode].push(n)})}
+function delAcc(i){const A=S.acc[S.mode],n=A[i];if(A.length<2){toast('Keep at least one account');return}
+ if(mine().some(t=>t.acc===n)||S.rec.some(r=>r.mode===S.mode&&r.acc===n)){toast('Delete its transactions and repeats first');return}
+ A.splice(i,1);store();draw()}
+function transfer(){const A=S.acc[S.mode];if(A.length<2){toast('Add a second account first');return}
+ openSheet('Transfer between accounts',[{k:'from',t:'select',l:'From',opts:()=>S.acc[S.mode]},{k:'to',t:'select',l:'To',opts:()=>S.acc[S.mode],def:A[1]},{k:'amt',t:'number',l:'Amount ('+S.cur+')',def:''},{k:'date',t:'date',l:'Date',def:today()}],
+ v=>{const a=parseFloat(v.amt);if(v.from===v.to)return 'Choose two different accounts.';if(!pos(a))return 'Enter an amount greater than 0.';if(!v.date)return 'Pick a date.';
+  const g=uid(),b={tr:g,mode:S.mode,amt:a,cat:'Transfer',date:v.date};
+  S.tx.push({...b,id:uid(),type:'tout',acc:v.from,note:'to '+v.to},{...b,id:uid(),type:'tin',acc:v.to,note:'from '+v.from})})}
+function catList(){const m=S.mode;return ['expense','income'].map(t=>`<div class="card"><b>${cap(t)}</b><div class="mu" style="margin:4px 0 8px">Your custom categories</div>${S.cats[m][t].length?S.cats[m][t].map((c,i)=>`<span class="chip">${esc(c)}<button class="x" style="padding:0 0 0 6px;font-size:14px" aria-label="Remove" onclick="delCat('${t}',${i})">×</button></span>`).join(''):'<span class="mu">None yet</span>'}</div>`).join('')+`<button class="btn alt" onclick="addCat()">Add category</button>`}
+function addCat(){openSheet('Add category',[{k:'type',t:'seg',opts:()=>['expense','income'],def:'expense'},{k:'name',t:'text',l:'Category name',def:''}],v=>{const n=v.name.trim().slice(0,24);if(!n)return 'Enter a name.';if(catsOf(S.mode,v.type).some(c=>c.toLowerCase()===n.toLowerCase()))return 'That category already exists.';S.cats[S.mode][v.type].push(n)})}
+function delCat(t,i){S.cats[S.mode][t].splice(i,1);store();draw()}
+
+/* Recurring */
+const iso=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+const dim=(y,m)=>new Date(y,m+1,0).getDate();
+function adv(d,f,a){const[y,m,dd]=d.split('-').map(Number);let x;
+ if(f==='daily')x=new Date(y,m-1,dd+1);else if(f==='weekly')x=new Date(y,m-1,dd+7);
+ else if(f==='yearly')x=new Date(y+1,m-1,Math.min(a,dim(y+1,m-1)));
+ else x=new Date(y,m,Math.min(a,dim(y,m)));return iso(x)}
+function runRec(){let ch=0;const t=today();S.rec.forEach(r=>{let n=0;while(r.next<=t&&n++<400){S.tx.push({id:uid(),mode:r.mode,type:r.type,amt:r.amt,cat:r.cat,acc:r.acc,date:r.next,note:r.note,r:1});r.next=adv(r.next,r.freq,r.day);ch=1}});if(ch)store()}
+function recList(){const a=S.rec.filter(r=>r.mode===S.mode);return a.length?a.map(r=>`<div class="card"><div class="row"><b>${esc(r.cat)} <span class="mu">· ${r.freq}</span></b><b class="${r.type==='income'?'in':'ex'}" style="text-align:right">${r.type==='income'?'+':'−'}${fmt(r.amt)}</b></div><div class="mu" style="margin-top:4px">${esc(r.note||'')}${r.note?' · ':''}Next: ${r.next}<button class="x" style="float:right;font-size:14px" onclick="delRec('${r.id}')">stop</button></div></div>`).join(''):'<div class="card empty">None yet. Choose "Repeat" when adding a transaction.</div>'}
+function delRec(id){S.rec=S.rec.filter(r=>r.id!==id);store();draw()}
+
+/* Export */
+async function saveFile(name,data){let d=null;try{d=window.claude&&await claude.use('downloads')}catch(e){}
+ if(!d){toast('Export is not available in this view');return}
+ try{await d.save({filename:name,data});toast('Saved')}catch(e){if(e&&e.code!=='declined')toast('Could not save the file')}}
+function expCsv(){const a=mine();if(!a.length){toast('Nothing to export yet');return}
+ const c=s=>'"'+String(s).replace(/"/g,'""')+'"';
+ const t=['Date,Account,Type,Category,Note,Amount ('+CODE[S.cur]+')'].concat(a.map(x=>[x.date,c(x.acc),x.type,x.cat,c(x.note||''),(x.type==='income'||x.type==='tin'?'':'-')+x.amt].join(',')));
+ saveFile('coinly-'+S.mode+'-transactions.csv','\ufeff'+t.join('\n'))}
+function expPdf(){const a=mine().filter(t=>t.date.startsWith(month)),cc=CODE[S.cur],n=x=>cc+' '+x.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const inc=sum(a,'income'),exp=sum(a,'expense'),cats={};a.filter(t=>t.type==='expense').forEach(t=>cats[t.cat]=(cats[t.cat]||0)+t.amt);
+ const L=['COINLY - '+S.mode.toUpperCase()+' REPORT',ml(month),'','Income:   '+n(inc),'Expenses: '+n(exp),'Net:      '+n(inc-exp),'','SPENDING BY CATEGORY'];
+ Object.entries(cats).sort((x,y)=>y[1]-x[1]).forEach(([c,v])=>L.push('  '+c.padEnd(16)+n(v).padStart(18)+('  '+Math.round(v/exp*100)+'%')));
+ L.push('','TRANSACTIONS');if(!a.length)L.push('  (none)');
+ a.filter(t=>t.type==='income'||t.type==='expense').reverse().forEach(t=>L.push(t.date+'  '+(t.type==='income'?'IN ':'OUT')+' '+t.cat.padEnd(12).slice(0,12)+' '+n(t.amt).padStart(18)+'  '+(t.note||'').slice(0,28)));
+ saveFile('coinly-'+S.mode+'-'+month+'.pdf',pdf(L))}
+function pdf(lines){const per=50,pg=[];for(let i=0;i<lines.length;i+=per)pg.push(lines.slice(i,i+per));
+ const o=[];o[1]='<</Type/Catalog/Pages 2 0 R>>';o[2]=`<</Type/Pages/Kids[${pg.map((_,i)=>(5+i*2)+' 0 R').join(' ')}]/Count ${pg.length}>>`;o[3]='<</Type/Font/Subtype/Type1/BaseFont/Courier>>';
+ pg.forEach((p,i)=>{const s='BT /F1 10 Tf 40 800 Td 14 TL '+p.map(l=>'('+l.replace(/[\\()]/g,'\\$&').replace(/[^\x20-\x7e]/g,'?')+') Tj T*').join(' ')+' ET';
+  o[4+i*2]=`<</Length ${s.length}>>\nstream\n${s}\nendstream`;o[5+i*2]=`<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents ${4+i*2} 0 R/Resources<</Font<</F1 3 0 R>>>>>>`});
+ let out='%PDF-1.4\n';const off=[];for(let i=1;i<o.length;i++){off[i]=out.length;out+=`${i} 0 obj\n${o[i]}\nendobj\n`}
+ const x=out.length;out+=`xref\n0 ${o.length}\n0000000000 65535 f \n`+off.slice(1).map(v=>String(v).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${o.length}/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`;
+ return new Blob([out],{type:'application/pdf'})}
+
+function setMode(m){S.mode=m;store();draw()}
+function draw(){const T=[['home','Home'],['txs','History'],['rep','Reports'],['plan','Plan']];
+ document.getElementById('app').innerHTML=`<div class="top"><b>Coinly</b><div class="seg">${['personal','business'].map(m=>`<button class="${S.mode===m?'on':''}" onclick="setMode('${m}')">${cap(m)}</button>`).join('')}</div><select aria-label="Currency" onchange="S.cur=this.value;store();draw()">${Object.keys(CODE).map(c=>`<option ${S.cur===c?'selected':''}>${c}</option>`).join('')}</select></div>${V[tab]()}<nav><div>${T.map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';draw();scrollTo(0,0)">${l}</button>`).join('')}</div></nav><button class="fab" aria-label="Add transaction" onclick="addTx()">+</button>${sheetHtml()}`}
+runRec();draw();
+</script></body></html>
